@@ -1,4 +1,6 @@
-import math, time, os, sys, random
+from tkinter import filedialog
+import math, time, os, sys, random, threading
+import tkinter as tk
 
 note_format_after_x_y_and_time = _nft_ = ",1,0,0:0:0:0:"
 note_format_after_x_y_and_time_with_new_combo = _nftnc_ = ",5,0,0:0:0:0:"
@@ -8,19 +10,27 @@ New_combo_or_not = [_nft_, _nftnc_, _nft_, _nft_, _nft_, _nftnc_,  _nft_, _nft_]
 _t1 = "Welcome to the PhaazeOS osu!map generator. This generator can generate simple hitcircle only maps for jump training and fun."
 x = input(_t1+"\nPress Enter to continue.\n")
 
-_t2 = "Make sure you have the base map prepared.\n2 circles at the beginning to get the time distance between them and one at the very last to know where to stop.\n"
+_t2 = "Make sure you have the base map prepared.\nAt lease 2 circles at the beginning to get the time distance between them\nand one at the very last to know where to stop.\nMake sure the distance between the notes is the same and remove breaks.\n"
 x = input(_t2)
 
-x = input("Make also sure the '.osu' file and this programm are in the same folder.\n")
-
-x = input("WARNING: This program will not take BPM changes or any timeing points ind calculations\nPlease press enter once again to start an choose a file in the folder.")
+x = input("WARNING: This program will not take BPM changes or any timing points in calculations\nPlease press enter once again to start and choose a file.")
 
 print("----------------------------------------------------------------------------")
+
+def is_out_of_calc_time(info):
+	time.sleep(60)
+	if info.successfull_generated == True: return
+	else:
+		print("It seems like the generator is taking to long... thats most liky because you made stupid settings")
+		print("The Programm will exit itself now, please try again with better settings.")
+		time.sleep(3)
+		sys.exit()
 
 class generator(object):
 	def __init__(self):
 		self.ingnore_files = []
 
+		self.object_or_so = []
 		self.new_combo_d = 0
 		self.min_distance = 0
 		self.max_distance = 800
@@ -108,8 +118,8 @@ class generator(object):
 				break
 			else:
 				if check.isdigit():
-					if not 0 < int(check) <= 600:
-						print(check + " is to big or small, it has to be in range 0-600")
+					if not 0 < int(check) <= math.sqrt((self.max_x-self.min_x)**2 + (self.max_y-self.min_y)**2):
+						print(check + " is to big or small, it has to be in range 0-" + str(round(math.sqrt((self.max_x-self.min_x)**2 + (self.max_y-self.min_y)**2))))
 					else:
 						self.min_distance = int(check)
 						print("Min Distance set to: " + check)
@@ -124,8 +134,8 @@ class generator(object):
 				break
 			else:
 				if check.isdigit():
-					if not 0 < int(check) <= 600:
-						print(check + " is to big or small, it has to be in range 1-600")
+					if not 0 < int(check) <= math.sqrt((self.max_x-self.min_x)**2 + (self.max_y-self.min_y)**2):
+						print(check + " is to big or small, it has to be in range 1-" + str(round(math.sqrt((self.max_x-self.min_x)**2 + (self.max_y-self.min_y)**2))))
 					else:
 						self.max_distance = int(check)
 						print("Max Distance set to: " + check)
@@ -156,13 +166,25 @@ class generator(object):
 
 	def get_a_file(self):
 		o_file = None
-		for file_ in os.listdir():
-			if str(file_).endswith(".osu") and not file_ in self.ingnore_files:
-				return file_
+		root = tk.Tk()
+		root.withdraw()
+		while True:
+			o_file = filedialog.askopenfilename()
+
+			if o_file == "" or o_file == " ":
+				return ""
+
+			if not o_file.endswith(".osu"):
+				print("Thats not a '.osu' file, please select a '.osu' file")
+				time.sleep(2)
+
+			else: break
 
 		if o_file == None:
 			print("No \".osu\" file found. Please place the Programm in a osu folder (Best: In a extra folder with only 1 \".osu\" file)")
 			return self.exit_programm()
+
+		return o_file
 
 	def get_time_from_delay(self, delay_time_):
 		s, ms = divmod(delay_time_, 1000)
@@ -207,26 +229,158 @@ class generator(object):
 		c = math.sqrt(distance_x**2 + distance_y**2)
 		return c
 
-	def make_me_a_new_map(self):
+	def beginn_settings(self):
 		while True:
-			#get a ".osu" file
-			file_ = self.get_a_file()
+			_input = input(">>> ").lower()
 
-			sure = input("\nUsing: " + file_ + " ?\n\nEnter: \"Y\" to start or press enter to switch throw all .osu files in the folder\n>>> ")
-			if not "y" == sure.lower():
-				self.ingnore_files.append(file_)
-				continue
+			if _input == "a": #Beginner
+				self.min_x = self.min_x + 50
+				self.max_x = self.max_x - 50
+				self.min_y = self.min_y + 50
+				self.max_y = self.max_y - 50
+				self.min_distance = 50
+				self.max_distance = 100
+				self.new_combo_d = 4
+				break
 
-			break
-		print("\nContinue using: " + file_)
+			elif _input == "b": #Medium
+				self.min_x = self.min_x + 20
+				self.max_x = self.max_x - 20
+				self.min_y = self.min_y + 20
+				self.max_y = self.max_y - 20
+				self.min_distance = 100
+				self.max_distance = 150
+				self.new_combo_d = 4
+				break
+
+			elif _input == "c": #Pro
+				self.min_x = self.min_x + 5
+				self.max_x = self.max_x - 5
+				self.min_y = self.min_y + 5
+				self.max_y = self.max_y - 5
+				self.min_distance = 150
+				self.max_distance = 200
+				self.new_combo_d = 4
+				break
+
+			elif _input == "d": #Master
+				self.min_x = self.min_x
+				self.max_x = self.max_x
+				self.min_y = self.min_y
+				self.max_y = self.max_y
+				self.min_distance = 250
+				self.max_distance = self.max_distance
+				self.new_combo_d = 4
+				break
+
+			elif _input == "e": #random
+				self.min_x = self.min_x
+				self.max_x = self.max_x
+				self.min_y = self.min_y
+				self.max_y = self.max_y
+				self.min_distance = self.min_distance
+				self.max_distance = self.max_distance
+				self.new_combo_d = 0
+				break
+			#
+			elif _input == "1": #Strange streams
+				self.min_x = self.min_x
+				self.max_x = self.max_x
+				self.min_y = self.min_y
+				self.max_y = self.max_y
+				self.min_distance = 20
+				self.max_distance = 21
+				self.new_combo_d = 8
+				break
+
+			elif _input == "2": #Only left window site
+				self.min_x = self.min_x
+				self.max_x = int(self.max_x / 2)
+				self.min_y = self.min_y
+				self.max_y = self.max_y
+				self.min_distance = self.min_distance
+				self.max_distance = self.max_distance
+				self.new_combo_d = 4
+				break
+
+			elif _input == "3": #Only right window site
+				self.min_x = int(self.max_x / 2)
+				self.max_x = self.max_x
+				self.min_y = self.min_y
+				self.max_y = self.max_y
+				self.min_distance = self.min_distance
+				self.max_distance = self.max_distance
+				self.new_combo_d = 4
+				break
+
+			elif _input == "4": #Small middle window
+				self.min_x = int((self.max_x / 3))
+				self.max_x = int((self.max_x / 3) * 2)
+				self.min_y = int((self.max_y / 3))
+				self.max_y = int((self.max_y / 3) * 2)
+				self.min_distance = self.min_distance
+				self.max_distance = self.max_distance
+				self.new_combo_d = 4
+				break
+
+			elif _input == "5": #All in one line
+				self.min_x = self.min_x
+				self.max_x = self.max_x
+				self.min_y = int((self.max_y / 2) - 1)
+				self.max_y = int((self.max_y / 2) + 1)
+				self.min_distance = 150
+				self.max_distance = self.max_distance
+				self.new_combo_d = 2
+				break
+
+			elif _input == "6": #Monstrata
+				self.min_x = self.min_x
+				self.max_x = self.max_x
+				self.min_y = self.min_y
+				self.max_y = self.max_y
+				self.min_distance = 175
+				self.max_distance = 176
+				self.new_combo_d = 3
+				break
+
+			elif _input == "" :
+				self.change_settings()
+				break
+			else:
+				print("Option not available, try again.")
+
+	def make_me_a_new_map(self):
+		#get a ".osu" file
+		file_ = self.get_a_file()
+
+		if file_ == "" or file_ == " ":
+			self.exit_programm()
+
+		print("\nContinue using: " + file_.split("/")[-1])
 		print("----------------------------------------------------------------------------")
 
-		#ask if settings should be changed
-		self.change_settings()
+		print("\nWanna use pre-settings? Or do you wanna set everything by yourself?\n")
+
+		print("A - Beginner")
+		print("B - Medium")
+		print("C - Pro")
+		print("D - Master")
+		print("E - |Random|")
+		print("")
+		print("1 - Strange streams")
+		print("2 - Only left window site")
+		print("3 - Only right window site")
+		print("4 - Small middle window")
+		print("5 - All on a line")
+		print("6 - Monstra... eee.. Triangle Edition")
+		print("")
+		print("Just Enter = Continue Custom Settings")
+
+		self.beginn_settings()
 
 		#open file
-		map_file = open(file_, "r", encoding="UTF-8").read()
 		try:
+			map_file = open(file_, "r", encoding="UTF-8").read()
 			splited_map = map_file.split("[HitObjects]\n")
 
 			rest_map = splited_map[0]
@@ -244,14 +398,36 @@ class generator(object):
 
 		list_of_all_objects = [single_hit_onject(h) for h in hit_objects.splitlines()]
 
-		if len(list_of_all_objects) != 3:
-			print("\nERROR: Only 2 objects and 1 Endpoint is allowed")
+		if len(list_of_all_objects) < 3:
+			print("You need at least 3 objects, 2 at the beginning and on at the very end")
 			return self.exit_programm()
 
 		self.first_hit_object = list_of_all_objects[0]
 		self.last_hit_object = list_of_all_objects[-1]
 
-		self.delay_time = int(list_of_all_objects[1].time) - int(list_of_all_objects[0].time)
+		def set_delay_time(list_):
+			total_delay = 0
+			ob1 = 0
+			ob2 = 1
+			calcavle_objects = 0
+
+			while True:
+				try:
+					_O1 = list_[ob1]
+					_O2 = list_[ob2]
+					if int(_O2.time) - int(_O1.time) != 0:
+						total_delay = total_delay + (int(_O2.time) - int(_O1.time))
+						calcavle_objects = calcavle_objects + 1
+
+					ob1 = ob1 + 1
+					ob2 = ob2 + 1
+				except:
+					break
+
+			delay = total_delay / calcavle_objects
+			return delay
+
+		self.delay_time = set_delay_time(list_of_all_objects[:-1])
 
 		confirm_text = 	"\n\nYour map starts at: {start} and ends at: {end} - Length: {length}m ({obj} Objects).\n"\
 						"The delay between 2 circles whould be: {delay}ms ~ {bpm} BPM.\n"\
@@ -263,6 +439,23 @@ class generator(object):
 																		bpm = self.get_bpm_from_delay(),
 																		obj = self.calc_objects()
 																	)
+
+		calc_acc = "Low ( |--------- )"
+		if len(list_of_all_objects[:-1]) > 5:
+			calc_acc = "Medium ( |||------- )"
+
+		if len(list_of_all_objects[:-1]) > 15:
+			calc_acc = "Normal ( |||||----- )"
+
+		if len(list_of_all_objects[:-1]) > 30:
+			calc_acc = "High ( |||||||--- )"
+
+		if len(list_of_all_objects[:-1]) > 60:
+			calc_acc = "High ( |||||||||| )"
+
+		print("\nHitpoint timing accuracy:\n{0} Objects found to calculate\n{1}".format(str(len(list_of_all_objects[:-1])), calc_acc))
+		print("If the accuracy is very low, it could be possile that later Hitpoint are offbeat,\ntry placing more objects to get the acc. higher.")
+
 
 		while True:
 			sure = input(confirm_text)
@@ -301,7 +494,12 @@ class generator(object):
 		#main generate
 		print("\nYour map will now be generated, based on you settings (especially distance) that could take a while...")
 		print("----------------------------------------------------------------------------")
+		time.sleep(2)
 		self.starting_time = time.time()
+		self.successfull_generated = False
+		thread = threading.Thread(target=is_out_of_calc_time, args=((self,)))
+		thread.daemon = True
+		thread.start()
 		while int(self.current_note_time) < int(self.last_hit_object.time) + self.delay_time:
 
 			new_hit_object = new_note(self)
@@ -315,17 +513,57 @@ class generator(object):
 
 			self.last_x = new_hit_object.x
 			self.last_y = new_hit_object.y
-			self.generated_map = self.generated_map + new_hit_object.text + "\n"
-			self.current_note_time = int(self.first_hit_object.time) + (int(self.delay_time) * int(self.hit_ammount))
+			self.object_or_so.append(new_hit_object.text)
+			self.current_note_time = math.ceil( int(self.first_hit_object.time) + ( self.delay_time * self.hit_ammount ) )
 			self.hit_ammount = self.hit_ammount + 1
+
+		self.generated_map = "\n".join(o for o in self.object_or_so[1:])
 
 		#finished mapping
 		#replace some stuff
+
+		print("\nYour Map is finished")
+		self.successfull_generated = True
+		self.exit_time = time.time()
+		process_time = round(self.exit_time - self.starting_time, 3)
+		print("Process time: " + str(process_time) + "s")
+		print("You can now change some settings.")
 		_hhhh = []
 		hhhh = rest_map.splitlines()
 		for line_ in hhhh:
 			if line_.startswith("StackLeniency"):
-				line_ = "StackLeniency: 0"
+				while True:
+					check = input("\nChange StackLeniency?  [0-7]  Enter = No Change\n>>> ")
+					if check == "":
+						break
+					else:
+						if check.isdigit():
+							if not 0 <= int(check) <= 7:
+								print(check + " is to big or small, it has to be in range 0-7")
+							else:
+								print("StackLeniency set to: " + check)
+								line_ = "StackLeniency: "+ check
+								break
+
+						else:
+							print("You can only enter a digital number.")
+
+			if line_.startswith("ApproachRate"):
+				while True:
+					check = input("\nChange ApproachRate?  [0-10]  Enter = No Change\n>>> ")
+					if check == "":
+						break
+					else:
+						if check.isdigit():
+							if not 0 <= int(check) <= 10:
+								print(check + " is to big or small, it has to be in range 0-10")
+							else:
+								print("ApproachRate set to: " + check)
+								line_ = "ApproachRate: "+ check
+								break
+
+						else:
+							print("You can only enter a digital number.")
 
 			if line_.startswith("Mode"):
 				line_ = "Mode: 0"
@@ -337,13 +575,55 @@ class generator(object):
 				line_ = "Tags:autogenerated,phaaze,cj,os.python"
 
 			if line_.startswith("HPDrainRate"):
-				line_ = "HPDrainRate:4"
+				while True:
+					check = input("\nChange HPDrainRate?  [0-10]  Enter = No Change\n>>> ")
+					if check == "":
+						break
+					else:
+						if check.isdigit():
+							if not 0 <= int(check) <= 10:
+								print(check + " is to big or small, it has to be in range 0-10")
+							else:
+								print("HPDrainRate set to: " + check)
+								line_ = "HPDrainRate: " + check
+								break
+
+						else:
+							print("You can only enter a digital number.")
 
 			if line_.startswith("CircleSize"):
-				line_ = "CircleSize:4"
+				while True:
+					check = input("\nChange CircleSize?  [0-10]  Enter = No Change\n>>> ")
+					if check == "":
+						break
+					else:
+						if check.isdigit():
+							if not 0 <= int(check) <= 10:
+								print(check + " is to big or small, it has to be in range 0-10")
+							else:
+								print("CircleSize set to: " + check)
+								line_ = "CircleSize: " + check
+								break
+
+						else:
+							print("You can only enter a digital number.")
 
 			if line_.startswith("OverallDifficulty"):
-				line_ = "OverallDifficulty:4"
+				while True:
+					check = input("\nChange OverallDifficulty?  [0-10]  Enter = No Change\n>>> ")
+					if check == "":
+						break
+					else:
+						if check.isdigit():
+							if not 0 <= int(check) <= 10:
+								print(check + " is to big or small, it has to be in range 0-10")
+							else:
+								print("OverallDifficulty set to: " + check)
+								line_ = "OverallDifficulty: " + check
+								break
+
+						else:
+							print("You can only enter a digital number.")
 
 			if line_.startswith("SliderMultiplier"):
 				line_ = "SliderMultiplier:1"
@@ -379,6 +659,8 @@ class generator(object):
 
 		finished_map = rest_map + "\n[HitObjects]\n" + self.generated_map
 
+		x = input("\nThats it. Press Enter to save and finish your map.")
+
 		fin = open(file_, "w", encoding="UTF-8")
 		fin.write(finished_map)
 		fin.close()
@@ -390,10 +672,7 @@ class generator(object):
 		sys.exit()
 
 	def success_exit(self):
-		self.exit_time = time.time()
-		process_time = round(self.exit_time - self.starting_time, 3)
 		print("\n\n---FINISHED---")
-		print("Process time: " + str(process_time) + "s")
 		print("Thanks for using the PhaazeOS osu!map generator :3\nAnd please... enjoy game.")
 		print(	" _____  _                          ____   _____\n"\
 				"|  __ \| |                        / __ \ / ____|\n"\
@@ -401,8 +680,29 @@ class generator(object):
 				"|  ___/| '_ \ / _` |/ _` |_  / _ \ |  | |\___ \\\n"\
 				"| |    | | | | (_| | (_| |/ /  __/ |__| |____) |\n"\
 				"|_|    |_| |_|\__,_|\__,_/___\___|\____/|_____/")
-		print("----------------------------------------------------------------------------")
-		time.sleep(5)
+		print("\n----------------------------------------------------------------------------")
+		print("| - - - - - - - - - -", end='\r'),
+		time.sleep(0.5)
+		print("| | - - - - - - - - -", end='\r'),
+		time.sleep(0.5)
+		print("| | | - - - - - - - -", end='\r'),
+		time.sleep(0.5)
+		print("| | | | - - - - - - -", end='\r'),
+		time.sleep(0.5)
+		print("| | | | | - - - - - -", end='\r'),
+		time.sleep(0.5)
+		print("| | | | | | - - - - -", end='\r'),
+		time.sleep(0.5)
+		print("| | | | | | | - - - -", end='\r'),
+		time.sleep(0.5)
+		print("| | | | | | | | - - -", end='\r'),
+		time.sleep(0.5)
+		print("| | | | | | | | | - -", end='\r'),
+		time.sleep(0.5)
+		print("| | | | | | | | | | -", end='\r'),
+		time.sleep(0.5)
+		print("| | | | | | | | | | | ", end='\r'),
+		time.sleep(0.5)
 		sys.exit()
 
 generator().make_me_a_new_map()
