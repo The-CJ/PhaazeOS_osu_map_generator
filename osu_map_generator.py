@@ -13,7 +13,7 @@ x = input(_t2)
 
 x = input("Make also sure the '.osu' file and this programm are in the same folder.\n")
 
-x = input("Please press enter once again to start an choose a file in the folder.")
+x = input("WARNING: This program will not take BPM changes or any timeing points ind calculations\nPlease press enter once again to start an choose a file in the folder.")
 
 print("----------------------------------------------------------------------------")
 
