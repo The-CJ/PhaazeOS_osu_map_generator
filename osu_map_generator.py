@@ -2,6 +2,8 @@ from tkinter import filedialog
 import math, time, os, sys, random, threading
 import tkinter as tk
 
+#
+
 note_format_after_x_y_and_time = _nft_ = ",1,0,0:0:0:0:"
 note_format_after_x_y_and_time_with_new_combo = _nftnc_ = ",5,0,0:0:0:0:"
 
