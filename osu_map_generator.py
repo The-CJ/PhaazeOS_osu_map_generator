@@ -2,8 +2,6 @@ from tkinter import filedialog
 import math, time, os, sys, random, threading
 import tkinter as tk
 
-#
-
 note_format_after_x_y_and_time = _nft_ = ",1,0,0:0:0:0:"
 note_format_after_x_y_and_time_with_new_combo = _nftnc_ = ",5,0,0:0:0:0:"
 
@@ -20,12 +18,13 @@ x = input("WARNING: This program will not take BPM changes or any timing points 
 print("----------------------------------------------------------------------------")
 
 def is_out_of_calc_time(info):
-	time.sleep(60)
+	time.sleep(180)
 	if info.successfull_generated == True: return
 	else:
 		print("It seems like the generator is taking to long... thats most liky because you made stupid settings")
 		print("The Programm will exit itself now, please try again with better settings.")
 		time.sleep(3)
+		info.error = True
 		sys.exit()
 
 class generator(object):
@@ -458,6 +457,10 @@ class generator(object):
 		print("\nHitpoint timing accuracy:\n{0} Objects found to calculate\n{1}".format(str(len(list_of_all_objects[:-1])), calc_acc))
 		print("If the accuracy is very low, it could be possile that later Hitpoint are offbeat,\ntry placing more objects to get the acc. higher.")
 
+		c = input("\nDo you wanna enter a map seed? It can be everything.  Enter = Full Random\n>>> ")
+		if c != None and c != "" and c != " ":
+			random.seed(a=c)
+
 
 		while True:
 			sure = input(confirm_text)
@@ -502,7 +505,8 @@ class generator(object):
 		thread = threading.Thread(target=is_out_of_calc_time, args=((self,)))
 		thread.daemon = True
 		thread.start()
-		while int(self.current_note_time) < int(self.last_hit_object.time) + self.delay_time:
+		self.error = False
+		while int(self.current_note_time) < int(self.last_hit_object.time) + self.delay_time and not self.error:
 
 			new_hit_object = new_note(self)
 
@@ -516,15 +520,19 @@ class generator(object):
 			self.last_x = new_hit_object.x
 			self.last_y = new_hit_object.y
 			self.object_or_so.append(new_hit_object.text)
-			self.current_note_time = math.ceil( int(self.first_hit_object.time) + ( self.delay_time * self.hit_ammount ) )
+			self.current_note_time = round( int(self.first_hit_object.time) + ( self.delay_time * self.hit_ammount ) )
 			self.hit_ammount = self.hit_ammount + 1
+
+			g = (100 * int(self.current_note_time)) / int(self.last_hit_object.time)
+
+			print("{0}%".format(str(round(g))), end='\r')
 
 		self.generated_map = "\n".join(o for o in self.object_or_so[1:])
 
 		#finished mapping
 		#replace some stuff
 
-		print("\nYour Map is finished")
+		print("100% - Your Map is finished", end='\r')
 		self.successfull_generated = True
 		self.exit_time = time.time()
 		process_time = round(self.exit_time - self.starting_time, 3)
