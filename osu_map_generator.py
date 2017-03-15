@@ -10,10 +10,10 @@ New_combo_or_not = [_nft_, _nftnc_, _nft_, _nft_, _nft_, _nftnc_,  _nft_, _nft_]
 _t1 = "Welcome to the PhaazeOS osu!map generator. This generator can generate simple hitcircle only maps for jump training and fun."
 x = input(_t1+"\nPress Enter to continue.\n")
 
-_t2 = "Make sure you have the base map prepared.\nAt lease 2 circles at the beginning to get the time distance between them\nand one at the very last to know where to stop.\nMake sure the distance between the notes is the same and remove breaks.\n"
+_t2 = "Make sure you have the base map prepared.\nAt LEAST 2 circles at the beginning to get the time distance between them\nand one at the very last to know where to stop.\nMake sure the distance between the notes is the same and remove breaks.\n"
 x = input(_t2)
 
-x = input("WARNING: This program will not take BPM changes or any timing points in calculations\nPlease press enter once again to start and choose a file.")
+x = input("WARNING: This program will not take BPM changes or any timing points in calculations\nMAKE SURE: YOU PLACED THE NOTES ON FULL BEATS (WHITE TIMING POINTS)\n\nPlease press enter once again to start and choose a file.")
 
 print("----------------------------------------------------------------------------")
 
@@ -39,6 +39,10 @@ class generator(object):
 		self.min_y = 0
 		self.max_x = 512
 		self.max_y = 384
+
+		self.only_beats = True
+		self.can_have_sliders = False
+		self.only_sliders = False
 
 	def change_settings(self):
 		while True: #min x
@@ -161,6 +165,40 @@ class generator(object):
 						self.new_combo_d = int(check)
 						print("New Combo interval set to: " + check)
 						break
+
+				else:
+					print("You can only enter a digital number.")
+
+		while True: #sliders?
+			break
+			check = input("\nDo you wanna have:\n\nOnly Beats : 1\nOnly Sliders : 2\nBoth : 3\n   Just press enter to keep it only Beats.\n>>> ")
+			if check == "":
+				break
+			else:
+				if check.isdigit():
+					if not 0 < int(check) < 4:
+						print(check + " is to smallor high, it can only be from 1-3")
+					else:
+						if int(check) == 1:
+							self.only_beats = True
+							self.can_have_sliders = False
+							self.only_sliders = False
+							print("Only Beats enabled")
+							break
+
+						if int(check) == 2:
+							self.only_beats = False
+							self.can_have_sliders = False
+							self.only_sliders = True
+							print("Only Sliders enabled")
+							break
+
+						if int(check) == 3:
+							self.only_beats = False
+							self.can_have_sliders = True
+							self.only_sliders = False
+							print("Beats and Sliders enabled")
+							break
 
 				else:
 					print("You can only enter a digital number.")
@@ -483,19 +521,6 @@ class generator(object):
 		self.last_x = 0
 		self.last_y = 0
 
-		class new_note(object):
-			def __init__(self, info):
-				self.x = random.randint(info.min_x, info.max_x)
-				self.y = random.randint(info.min_y, info.max_y)
-				self.time = info.current_note_time
-				self.new_c = info.need_new_combo()
-				self.text = "{x},{y},{time}{rest}".format	(
-																x = str(self.x),
-																y = str(self.y),
-																time = str(self.time),
-																rest = str(self.new_c)
-															)
-
 		#main generate
 		print("\nYour map will now be generated, based on you settings (especially distance) that could take a while...")
 		print("----------------------------------------------------------------------------")
@@ -506,22 +531,53 @@ class generator(object):
 		thread.daemon = True
 		thread.start()
 		self.error = False
+		#beat or slider
+		beat_or_slider_ = [0,0, 0,0, 0,0, 0,1, 1,1] #7/10
 		while int(self.current_note_time) < int(self.last_hit_object.time) + self.delay_time and not self.error:
 
-			new_hit_object = new_note(self)
+			n_or_s = random.choice(beat_or_slider_)
+
+			#generate a new one
+			if self.can_have_sliders:
+				if n_or_s == 0:
+					new_hit_object = new_note(self)
+				else:
+					new_hit_object = new_slider(self)
+
+			if self.only_beats:
+					new_hit_object = new_note(self)
+
+			if self.only_sliders:
+					new_hit_object = new_slider(self)
 
 			maxdi = self.max_distance
 			mindi = self.min_distance
 
-			dis = self.get_distanse(self.last_x, self.last_y, new_hit_object.x, new_hit_object.y)
-			if not mindi < dis < maxdi:
-				continue
+			#check new object
+			if self.only_beats or (self.can_have_sliders and n_or_s == 0):
+				#calc for beats
+				dis = self.get_distanse(self.last_x, self.last_y, new_hit_object.x, new_hit_object.y)
+				if not mindi < dis < maxdi:
+					continue
 
-			self.last_x = new_hit_object.x
-			self.last_y = new_hit_object.y
+				self.last_x = new_hit_object.x
+				self.last_y = new_hit_object.y
+
+				self.current_note_time = round( int(self.first_hit_object.time) + ( self.delay_time * self.hit_ammount ) )
+				self.hit_ammount = self.hit_ammount + 1
+
+			elif self.only_sliders or (self.can_have_sliders and n_or_s == 1):
+				#calc for sliders
+				dis = self.get_distanse(self.last_x, self.last_y, new_hit_object.x, new_hit_object.y)
+				if not mindi < dis < maxdi:
+					continue
+
+				self.last_x = new_hit_object.end_x
+				self.last_y = new_hit_object.end_y
+
+
 			self.object_or_so.append(new_hit_object.text)
-			self.current_note_time = round( int(self.first_hit_object.time) + ( self.delay_time * self.hit_ammount ) )
-			self.hit_ammount = self.hit_ammount + 1
+
 
 			g = (100 * int(self.current_note_time)) / int(self.last_hit_object.time)
 
@@ -660,8 +716,12 @@ class generator(object):
 			if line_.startswith("[TimingPoints]"):
 				line_ = "\n[TimingPoints]"
 
+			if line_.startswith("Creator"):
+				line_ = "Creator:Phaaze osu!map generator"
+
 			if line_.startswith("[Colours]"):
 				line_ = "\n[Colours]"
+
 
 			_hhhh.append(line_)
 
@@ -714,6 +774,33 @@ class generator(object):
 		print("| | | | | | | | | | | ", end='\r'),
 		time.sleep(0.5)
 		sys.exit()
+
+class new_note(object):
+	def __init__(self, info):
+		self.x = random.randint(info.min_x, info.max_x)
+		self.y = random.randint(info.min_y, info.max_y)
+		self.time = info.current_note_time
+		self.new_c = info.need_new_combo()
+		self.text = "{x},{y},{time}{rest}".format	(
+														x = str(self.x),
+														y = str(self.y),
+														time = str(self.time),
+														rest = str(self.new_c)
+													)
+class new_slider(object):
+	def __init__(self, info):
+		self.x = random.randint(info.min_x, info.max_x)
+		self.y = random.randint(info.min_y, info.max_y)
+		self.time = info.current_note_time
+		self.new_c = info.need_new_combo()
+		self.text = "{x},{y},{time}{sliderpoints}{nc}{length_and_repeats}".format	(
+														x = str(self.x),
+														y = str(self.y),
+														time = str(self.time),
+														sliderpoints = "",
+														nc="",
+														length_and_repeats = ""
+													)
 
 generator().make_me_a_new_map()
 
