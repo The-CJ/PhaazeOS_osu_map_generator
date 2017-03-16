@@ -10,10 +10,10 @@ New_combo_or_not = [_nft_, _nftnc_, _nft_, _nft_, _nft_, _nftnc_,  _nft_, _nft_]
 _t1 = "Welcome to the PhaazeOS osu!map generator. This generator can generate simple hitcircle only maps for jump training and fun."
 x = input(_t1+"\nPress Enter to continue.\n")
 
-_t2 = "Make sure you have the base map prepared.\nAt lease 2 circles at the beginning to get the time distance between them\nand one at the very last to know where to stop.\nMake sure the distance between the notes is the same and remove breaks.\n"
+_t2 = "Make sure you have the base map prepared.\nAt LEAST 2 circles at the beginning to get the time distance between them\nand one at the very last to know where to stop.\nMake sure the distance between the notes is the same and remove breaks.\n"
 x = input(_t2)
 
-x = input("WARNING: This program will not take BPM changes or any timing points in calculations\nPlease press enter once again to start and choose a file.")
+x = input("WARNING: This program will not take BPM changes or any timing points in calculations\nMAKE SURE: YOU PLACED THE NOTES ON FULL BEATS (WHITE TIMING POINTS)\n\nPlease press enter once again to start and choose a file.")
 
 print("----------------------------------------------------------------------------")
 
@@ -30,6 +30,9 @@ def is_out_of_calc_time(info):
 class generator(object):
 	def __init__(self):
 		self.ingnore_files = []
+		self.alternate_beat_option = [1,1,1,1,1,2,2,2,4]
+		self.hit_ammount = 0
+		self.real_hit_ammount = 0
 
 		self.object_or_so = []
 		self.new_combo_d = 0
@@ -39,6 +42,12 @@ class generator(object):
 		self.min_y = 0
 		self.max_x = 512
 		self.max_y = 384
+
+		self.only_beats = True
+		self.can_have_sliders = False
+		self.only_sliders = False
+
+		self.beat_type = "1"
 
 	def change_settings(self):
 		while True: #min x
@@ -114,7 +123,7 @@ class generator(object):
 			self.exit_programm()
 
 		while True: # min distance
-			check = input("\nChange the minimum distance between 2 circles?   Just press enter to keep it 0.\n(e.g. a cummon 1/4 Stream is like 30 and normal Monstrata jumps around 100)\n>>> ")
+			check = input("\nChange the minimum distance between FULL 2 circles?   Just press enter to keep it 0.\n(e.g. a cummon 1/4 Stream is like 30 and normal Monstrata jumps around 100)\n>>> ")
 			if check == "":
 				break
 			else:
@@ -130,7 +139,7 @@ class generator(object):
 					print("You can only enter a digital number.")
 
 		while True: # max distance
-			check = input("\nChange the maximum distance between 2 circles?   Just press enter to keep it unlimited.\n(e.g. a cummon 1/4 Stream is like 30 and normal Monstrata jumps around 100)\n>>> ")
+			check = input("\nChange the maximum distance between FULL 2 circles?   Just press enter to keep it unlimited.\n(e.g. a cummon 1/4 Stream is like 30 and normal Monstrata jumps around 100)\n>>> ")
 			if check == "":
 				break
 			else:
@@ -161,6 +170,86 @@ class generator(object):
 						self.new_combo_d = int(check)
 						print("New Combo interval set to: " + check)
 						break
+
+				else:
+					print("You can only enter a digital number.")
+
+		while True: #sliders?
+			check = input("\nDo you wanna have:\n\nOnly Beats : 1\nOnly Sliders : 2\nBoth : 3\n   Just press enter to keep it only Beats.\n>>> ")
+			if check == "":
+				break
+			else:
+				if check.isdigit():
+					if not 0 < int(check) < 4:
+						print(check + " is to smallor high, it can only be from 1-3")
+					else:
+						if int(check) == 1:
+							self.only_beats = True
+							self.can_have_sliders = False
+							self.only_sliders = False
+							print("Only Beats enabled")
+							break
+
+						if int(check) == 2 and "" == "P":
+							self.only_beats = False
+							self.can_have_sliders = False
+							self.only_sliders = True
+							print("Only Sliders enabled")
+							break
+
+						if int(check) == 3 and "" == "P":
+							self.only_beats = False
+							self.can_have_sliders = True
+							self.only_sliders = False
+							print("Beats and Sliders enabled")
+							break
+
+				else:
+					print("You can only enter a digital number.")
+
+		while True: #beat type?
+			check = input("\nDo you wanna have:\n\nOnly Full Beats : 1\nOnly Half Beats : 2\nFull and Half : 3\n1/4 Tripple : 4\nFull and Tripple : 5\nHalf and Tripple : 6\nAll Types : 7\n\nJust press enter to keep it only Full Beats.\n>>> ")
+			if check == "":
+				break
+			else:
+				if check.isdigit():
+					if not 0 < int(check) < 8:
+						print(check + " is to smallor high, it can only be from 1-7")
+					else:
+						if int(check) == 1:
+							self.beat_type = "1"
+							print("Only Full Beats enabled")
+							break
+
+						if int(check) == 2:
+							self.beat_type = "2"
+							print("Only Half Beats enabled")
+							break
+
+						if int(check) == 3:
+							self.beat_type = "12"
+							print("Full and Half Beats enabled")
+							break
+
+						if int(check) == 4:
+							self.beat_type = "4"
+							print("Streams enabled")
+							break
+
+						if int(check) == 5:
+							self.beat_type = "14"
+							print("Full and Streams enabled")
+							break
+
+						if int(check) == 6:
+							self.beat_type = "24"
+							print("Half and Streams enabled")
+							break
+
+						if int(check) == 7:
+							self.beat_type = "124"
+							print("All types enabled")
+							break
 
 				else:
 					print("You can only enter a digital number.")
@@ -196,7 +285,7 @@ class generator(object):
 		if self.new_combo_d == 0:
 			return random.choice(New_combo_or_not)
 		else:
-			_g_, _e_ = divmod(self.hit_ammount, self.new_combo_d)
+			_g_, _e_ = divmod(self.real_hit_ammount, self.new_combo_d)
 			if _e_ == 0:
 				return note_format_after_x_y_and_time_with_new_combo
 			else:
@@ -274,7 +363,22 @@ class generator(object):
 				self.new_combo_d = 4
 				break
 
-			elif _input == "e": #random
+			elif _input == "e": #S: 2 beats
+				self.min_x = self.min_x
+				self.max_x = self.max_x
+				self.min_y = self.min_y
+				self.max_y = self.max_y
+				self.min_distance = 175
+				self.max_distance = 180
+				self.new_combo_d = 4
+
+				self.beat_type = "12"
+				self.only_beats = True
+				self.can_have_sliders = False
+				self.only_sliders = False
+				break
+
+			elif _input == "f": #random
 				self.min_x = self.min_x
 				self.max_x = self.max_x
 				self.min_y = self.min_y
@@ -282,8 +386,13 @@ class generator(object):
 				self.min_distance = self.min_distance
 				self.max_distance = self.max_distance
 				self.new_combo_d = 0
+				self.beat_type = "124"
+				self.can_have_sliders = True
+				self.only_beats = False
+				self.only_sliders = False
 				break
-			#
+				#
+
 			elif _input == "1": #Strange streams
 				self.min_x = self.min_x
 				self.max_x = self.max_x
@@ -292,6 +401,7 @@ class generator(object):
 				self.min_distance = 20
 				self.max_distance = 21
 				self.new_combo_d = 8
+				self.beat_type = "4"
 				break
 
 			elif _input == "2": #Only left window site
@@ -347,6 +457,7 @@ class generator(object):
 			elif _input == "" :
 				self.change_settings()
 				break
+
 			else:
 				print("Option not available, try again.")
 
@@ -366,7 +477,8 @@ class generator(object):
 		print("B - Medium")
 		print("C - Pro")
 		print("D - Master")
-		print("E - |Random|")
+		print("E - Advanced with Half Beats (long generate time)")
+		print("F - |Random|")
 		print("")
 		print("1 - Strange streams")
 		print("2 - Only left window site")
@@ -431,7 +543,7 @@ class generator(object):
 		self.delay_time = set_delay_time(list_of_all_objects[:-1])
 
 		confirm_text = 	"\n\nYour map starts at: {start} and ends at: {end} - Length: {length}m ({obj} Objects).\n"\
-						"The delay between 2 circles whould be: {delay}ms ~ {bpm} BPM.\n"\
+						"The delay between 2 FULL BEAT circles whould be: {delay}ms ~ {bpm} BPM.\n"\
 						"Wanna create it now?  Y/N\n>>> ". format	(
 																		start = self.get_time_from_delay(int(self.first_hit_object.time)),
 																		end = self.get_time_from_delay(int(self.last_hit_object.time)),
@@ -454,7 +566,7 @@ class generator(object):
 		if len(list_of_all_objects[:-1]) > 60:
 			calc_acc = "High ( |||||||||| )"
 
-		print("\nHitpoint timing accuracy:\n{0} Objects found to calculate\n{1}".format(str(len(list_of_all_objects[:-1])), calc_acc))
+		print("\nHitpoint timing accuracy:\n\n{0} Objects found to calculate\n{1}".format(str(len(list_of_all_objects[:-1])), calc_acc))
 		print("If the accuracy is very low, it could be possile that later Hitpoint are offbeat,\ntry placing more objects to get the acc. higher.")
 
 		c = input("\nDo you wanna enter a map seed? It can be everything.  Enter = Full Random\n>>> ")
@@ -483,56 +595,69 @@ class generator(object):
 		self.last_x = 0
 		self.last_y = 0
 
-		class new_note(object):
-			def __init__(self, info):
-				self.x = random.randint(info.min_x, info.max_x)
-				self.y = random.randint(info.min_y, info.max_y)
-				self.time = info.current_note_time
-				self.new_c = info.need_new_combo()
-				self.text = "{x},{y},{time}{rest}".format	(
-																x = str(self.x),
-																y = str(self.y),
-																time = str(self.time),
-																rest = str(self.new_c)
-															)
-
 		#main generate
-		print("\nYour map will now be generated, based on you settings (especially distance) that could take a while...")
+		print("\nYour map will now be generated, based on you settings (especially distance or preset) that could take a while...")
 		print("----------------------------------------------------------------------------")
 		time.sleep(2)
 		self.starting_time = time.time()
 		self.successfull_generated = False
-		thread = threading.Thread(target=is_out_of_calc_time, args=((self,)))
-		thread.daemon = True
-		thread.start()
 		self.error = False
-		while int(self.current_note_time) < int(self.last_hit_object.time) + self.delay_time and not self.error:
+		#beat or slider
+		beat_or_slider_ = [0,0, 0,0, 0,0, 0,1, 1,1] #7/10
+		while int(self.current_note_time) < int(self.last_hit_object.time) and not self.error:
 
-			new_hit_object = new_note(self)
+			n_or_s = random.choice(beat_or_slider_)
+
+			#generate a new one
+			if self.can_have_sliders:
+				if n_or_s == 0:
+					new_hit_object = new_note(self)
+				else:
+					new_hit_object = new_slider(self)
+
+			if self.only_beats:
+					new_hit_object = new_note(self)
+
+			if self.only_sliders:
+					new_hit_object = new_slider(self)
 
 			maxdi = self.max_distance
 			mindi = self.min_distance
 
-			dis = self.get_distanse(self.last_x, self.last_y, new_hit_object.x, new_hit_object.y)
-			if not mindi < dis < maxdi:
-				continue
+			#check new object
+			if self.only_beats or (self.can_have_sliders and n_or_s == 0):
+				#calc for beats
+				dis = self.get_distanse(self.last_x, self.last_y, new_hit_object.x, new_hit_object.y)
+				if not mindi < dis < maxdi:
+					continue
 
-			self.last_x = new_hit_object.x
-			self.last_y = new_hit_object.y
-			self.object_or_so.append(new_hit_object.text)
-			self.current_note_time = round( int(self.first_hit_object.time) + ( self.delay_time * self.hit_ammount ) )
+				self.last_x = new_hit_object.x
+				self.last_y = new_hit_object.y
+
+			elif self.only_sliders or (self.can_have_sliders and n_or_s == 1):
+				#calc for sliders
+				dis = self.get_distanse(self.last_x, self.last_y, new_hit_object.x, new_hit_object.y)
+				if not mindi < dis < maxdi:
+					continue
+
+				self.last_x = new_hit_object.end_x
+				self.last_y = new_hit_object.end_y
+
+			self.current_note_time = int(self.first_hit_object.time) + round(self.hit_ammount * self.delay_time)
 			self.hit_ammount = self.hit_ammount + 1
+			self.real_hit_ammount = self.real_hit_ammount + new_hit_object.note_type_ammount
+			self.object_or_so.append(new_hit_object.text)
 
 			g = (100 * int(self.current_note_time)) / int(self.last_hit_object.time)
 
-			print("{0}%".format(str(round(g))), end='\r')
+			print("  {0}%    ".format(str(round(g, 5))), end='\r')
 
 		self.generated_map = "\n".join(o for o in self.object_or_so[1:])
 
 		#finished mapping
 		#replace some stuff
 
-		print("100% - Your Map is finished", end='\r')
+		print("100% - Your Map is finished")
 		self.successfull_generated = True
 		self.exit_time = time.time()
 		process_time = round(self.exit_time - self.starting_time, 3)
@@ -660,14 +785,18 @@ class generator(object):
 			if line_.startswith("[TimingPoints]"):
 				line_ = "\n[TimingPoints]"
 
+			if line_.startswith("Creator"):
+				line_ = "Creator:Phaaze osu!map generator"
+
 			if line_.startswith("[Colours]"):
 				line_ = "\n[Colours]"
+
 
 			_hhhh.append(line_)
 
 		rest_map = "\n".join(x for x in _hhhh if x != "")
 
-		finished_map = rest_map + "\n[HitObjects]\n" + self.generated_map
+		finished_map = rest_map + "\n\n[HitObjects]\n" + self.generated_map
 
 		x = input("\nThats it. Press Enter to save and finish your map.")
 
@@ -715,6 +844,110 @@ class generator(object):
 		time.sleep(0.5)
 		sys.exit()
 
+class new_note(object):
+	def __init__(self, info):
+		self.found_nothing = True
+		while self.found_nothing:
+			self.found_nothing = False
+			alternate = random.choice(info.alternate_beat_option)
+
+			if info.beat_type == "1" or ("1" in info.beat_type and alternate == 1):
+				self.note_type_ammount = 1
+				self.x = random.randint(info.min_x, info.max_x)
+				self.y = random.randint(info.min_y, info.max_y)
+				self.new_c = info.need_new_combo()
+				self.text = "{x},{y},{time}{rest}".format	(
+																x = str(self.x),
+																y = str(self.y),
+																time = str(int(info.current_note_time)),
+																#time = str(int(info.current_note_time + round(info.delay_time))),
+																rest = str(self.new_c)
+															)
+
+			elif info.beat_type == "2" or ("2" in info.beat_type and alternate == 2):
+
+				maxdi = info.max_distance
+				mindi = info.min_distance
+
+				self.first_x = random.randint(info.min_x, info.max_x)
+				self.first_y = random.randint(info.min_y, info.max_y)
+
+				while True:
+
+					self.x = random.randint(info.min_x, info.max_x)
+					self.y = random.randint(info.min_y, info.max_y)
+
+					dis = info.get_distanse(self.first_x, self.first_y, self.x, self.y)
+
+					if (mindi/2) < dis < (maxdi/2):
+						break
+				self.note_type_ammount = 2
+				self.text = "{first_x},{first_y},{time_h}{rest}\n"\
+							"{x},{y},{time}{rest}".format	(
+															first_x = self.first_x,
+															first_y = self.first_y,
+															#time_h = str(int((info.current_note_time + round(info.delay_time) / 2))),
+															time_h = str(int(info.current_note_time)),
+
+															x = self.x,
+															y = self.y,
+															#time = str(int(info.current_note_time + round(info.delay_time))),
+															time = str(int(info.current_note_time + round(info.delay_time / 2))),
+
+															rest = info.need_new_combo()
+															)
+
+			elif info.beat_type == "4" or ("4" in info.beat_type and alternate == 4):
+				maxdi = info.max_distance
+				mindi = info.min_distance
+
+				self.note_type_ammount = 3
+				self.x = random.randint(info.min_x, info.max_x)
+				self.y = random.randint(info.min_y, info.max_y)
+				self.text = "{first_x},{first_y},{time_4}{rest}\n"\
+							"{second_x},{second_y},{time_3}{rest1}\n"\
+							"{x},{y},{time}{rest3}".format	(
+															first_x = self.x,
+															first_y = self.y,
+															time_4 = str(int(info.current_note_time)),
+
+															second_x = self.x,
+															second_y = self.y,
+															time_3 = str(
+																			int(
+																				info.current_note_time + round((info.delay_time / 4))
+																				)
+																		),
+
+															x = self.x,
+															y = self.y,
+															time = str(int(info.current_note_time + round(info.delay_time / 2))),
+
+															rest = info.need_new_combo(),
+															rest1 = info.need_new_combo(),
+															rest3 = info.need_new_combo()
+															)
+
+			else:
+				self.found_nothing = True
+
+class new_slider(object):
+	def __init__(self, info):
+		self.x = random.randint(info.min_x, info.max_x)
+		self.y = random.randint(info.min_y, info.max_y)
+		self.time = info.current_note_time
+		self.new_c = info.need_new_combo()
+		self.text = "{x},{y},{time}{sliderpoints}{nc}{length_and_repeats}".format	(
+														x = str(self.x),
+														y = str(self.y),
+														time = str(self.time),
+														sliderpoints = "",
+														nc="",
+														length_and_repeats = ""
+													)
+
 generator().make_me_a_new_map()
 
 #The_CJ 2017
+
+# TODO: AR Komma stellen
