@@ -32,6 +32,7 @@ class generator(object):
 		self.ingnore_files = []
 		self.alternate_beat_option = [1,1,1,1,1,2,2,2,4]
 		self.hit_ammount = 0
+		self.real_hit_ammount = 0
 
 		self.object_or_so = []
 		self.new_combo_d = 0
@@ -284,7 +285,7 @@ class generator(object):
 		if self.new_combo_d == 0:
 			return random.choice(New_combo_or_not)
 		else:
-			_g_, _e_ = divmod(self.hit_ammount, self.new_combo_d)
+			_g_, _e_ = divmod(self.real_hit_ammount, self.new_combo_d)
 			if _e_ == 0:
 				return note_format_after_x_y_and_time_with_new_combo
 			else:
@@ -644,6 +645,7 @@ class generator(object):
 
 			self.current_note_time = int(self.first_hit_object.time) + round(self.hit_ammount * self.delay_time)
 			self.hit_ammount = self.hit_ammount + 1
+			self.real_hit_ammount = self.real_hit_ammount + new_hit_object.note_type_ammount
 			self.object_or_so.append(new_hit_object.text)
 
 			g = (100 * int(self.current_note_time)) / int(self.last_hit_object.time)
@@ -850,13 +852,15 @@ class new_note(object):
 			alternate = random.choice(info.alternate_beat_option)
 
 			if info.beat_type == "1" or ("1" in info.beat_type and alternate == 1):
+				self.note_type_ammount = 1
 				self.x = random.randint(info.min_x, info.max_x)
 				self.y = random.randint(info.min_y, info.max_y)
 				self.new_c = info.need_new_combo()
 				self.text = "{x},{y},{time}{rest}".format	(
 																x = str(self.x),
 																y = str(self.y),
-																time = str(int(info.current_note_time + round(info.delay_time))),
+																time = str(int(info.current_note_time)),
+																#time = str(int(info.current_note_time + round(info.delay_time))),
 																rest = str(self.new_c)
 															)
 
@@ -877,16 +881,18 @@ class new_note(object):
 
 					if (mindi/2) < dis < (maxdi/2):
 						break
-
+				self.note_type_ammount = 2
 				self.text = "{first_x},{first_y},{time_h}{rest}\n"\
 							"{x},{y},{time}{rest}".format	(
 															first_x = self.first_x,
 															first_y = self.first_y,
-															time_h = str(int((info.current_note_time + round(info.delay_time) / 2))),
+															#time_h = str(int((info.current_note_time + round(info.delay_time) / 2))),
+															time_h = str(int(info.current_note_time)),
 
 															x = self.x,
 															y = self.y,
-															time = str(int(info.current_note_time + round(info.delay_time))),
+															#time = str(int(info.current_note_time + round(info.delay_time))),
+															time = str(int(info.current_note_time + round(info.delay_time / 2))),
 
 															rest = info.need_new_combo()
 															)
@@ -895,6 +901,7 @@ class new_note(object):
 				maxdi = info.max_distance
 				mindi = info.min_distance
 
+				self.note_type_ammount = 3
 				self.x = random.randint(info.min_x, info.max_x)
 				self.y = random.randint(info.min_y, info.max_y)
 				self.text = "{first_x},{first_y},{time_4}{rest}\n"\
@@ -902,23 +909,19 @@ class new_note(object):
 							"{x},{y},{time}{rest3}".format	(
 															first_x = self.x,
 															first_y = self.y,
-															time_4 = str(
-																			int(
-																				info.current_note_time + round(info.delay_time)
-																				)
-																		),
+															time_4 = str(int(info.current_note_time)),
 
 															second_x = self.x,
 															second_y = self.y,
 															time_3 = str(
 																			int(
-																				info.current_note_time + round(info.delay_time) + round((info.delay_time / 4))
+																				info.current_note_time + round((info.delay_time / 4))
 																				)
 																		),
 
 															x = self.x,
 															y = self.y,
-															time = str(int(info.current_note_time + round(info.delay_time) + round(info.delay_time / 2))),
+															time = str(int(info.current_note_time + round(info.delay_time / 2))),
 
 															rest = info.need_new_combo(),
 															rest1 = info.need_new_combo(),
