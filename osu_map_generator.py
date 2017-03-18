@@ -30,7 +30,7 @@ def is_out_of_calc_time(info):
 class generator(object):
 	def __init__(self):
 		self.ingnore_files = []
-		self.alternate_beat_option = [1,1,1,1,1,2,2,2,4]
+		self.alternate_beat_option = [1,1,1, 2,2,2,2,2,2,2,2,2,2, 4,4,4,4]
 		self.hit_ammount = 0
 		self.real_hit_ammount = 0
 
@@ -285,7 +285,7 @@ class generator(object):
 		if self.new_combo_d == 0:
 			return random.choice(New_combo_or_not)
 		else:
-			_g_, _e_ = divmod(self.real_hit_ammount, self.new_combo_d)
+			_g_, _e_ = divmod(self.hit_ammount, self.new_combo_d)
 			if _e_ == 0:
 				return note_format_after_x_y_and_time_with_new_combo
 			else:
@@ -661,7 +661,7 @@ class generator(object):
 		self.successfull_generated = True
 		self.exit_time = time.time()
 		process_time = round(self.exit_time - self.starting_time, 3)
-		print("Process time: " + str(process_time) + "s")
+		print("Process time: " + str(process_time) + "s  -  {0} Objects generatred".format(str(self.real_hit_ammount)))
 		print("You can now change some settings.")
 		_hhhh = []
 		hhhh = rest_map.splitlines()
@@ -883,7 +883,7 @@ class new_note(object):
 						break
 				self.note_type_ammount = 2
 				self.text = "{first_x},{first_y},{time_h}{rest}\n"\
-							"{x},{y},{time}{rest}".format	(
+							"{x},{y},{time}{rest_1}".format	(
 															first_x = self.first_x,
 															first_y = self.first_y,
 															#time_h = str(int((info.current_note_time + round(info.delay_time) / 2))),
@@ -894,7 +894,8 @@ class new_note(object):
 															#time = str(int(info.current_note_time + round(info.delay_time))),
 															time = str(int(info.current_note_time + round(info.delay_time / 2))),
 
-															rest = info.need_new_combo()
+															rest = info.need_new_combo(),
+															rest_1 = _nft_
 															)
 
 			elif info.beat_type == "4" or ("4" in info.beat_type and alternate == 4):
@@ -924,8 +925,8 @@ class new_note(object):
 															time = str(int(info.current_note_time + round(info.delay_time / 2))),
 
 															rest = info.need_new_combo(),
-															rest1 = info.need_new_combo(),
-															rest3 = info.need_new_combo()
+															rest1 = _nft_,
+															rest3 = _nft_
 															)
 
 			else:
